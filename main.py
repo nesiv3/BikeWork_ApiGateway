@@ -6,11 +6,13 @@ from starlette.responses import Response
 from typing import List
 import inspect
 
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
 OPENAPI_URLS = [
-    "https://bikeworkparamapi-eqe3cbd0euhbe8ge.brazilsouth-01.azurewebsites.net/openapi.json",
-    "https://bikeworkscheduleapi-b9hge0fggygqd5by.brazilsouth-01.azurewebsites.net/openapi.json",
-    "https://bikeworkstoreapi.azurewebsites.net/openapi.json",
-    "https://bikeworkuserapi-dbejazg4gnc8hzd7.brazilsouth-01.azurewebsites.net/openapi.json"
+    url.strip() for url in os.getenv("OPENAPI_URLS", "").split("||") if url.strip()
 ]
 
 app = FastAPI(title="Dynamic API Gateway", version="1.0.4")
@@ -25,8 +27,7 @@ async def list_loaded_uris():
 async def root():
     return {
         "message": "Dynamic API Gateway is running",
-        "routes_loaded": len(routes_loaded),
-        "loaded_routes": routes_loaded
+        "routes_loaded": len(routes_loaded)
     }
 
 async def proxy(request: Request, target_url: str) -> Response:
