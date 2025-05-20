@@ -60,17 +60,6 @@ async def load_routes_from_openapi():
 
 app.include_router(api_router)
 
-@app.on_event("startup")
-async def startup_event():
-    await load_routes_from_openapi()
-    asyncio.create_task(periodic_reload())
-
-async def periodic_reload():
-    while True:
-        await asyncio.sleep(8 * 60 * 60)
-        print("[INFO] Recargando rutas desde OpenAPI...")
-        await load_routes_from_openapi()
-
 @app.post("/reload_apis")
 async def reload_apis():
     await load_routes_from_openapi()
