@@ -70,3 +70,8 @@ async def periodic_reload():
         await asyncio.sleep(8 * 60 * 60)
         print("[INFO] Recargando rutas desde OpenAPI...")
         await load_routes_from_openapi()
+
+@app.post("/reload_apis")
+async def reload_apis():
+    await load_routes_from_openapi()
+    return {"message": "APIs reloaded successfully", "routes_loaded": len(routes_loaded)}
