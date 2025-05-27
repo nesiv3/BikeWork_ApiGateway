@@ -1,3 +1,4 @@
+import asyncio
 import uuid
 from datetime import datetime
 from fastapi import Request
@@ -5,6 +6,8 @@ from fastapi.responses import JSONResponse
 from starlette.responses import Response
 import httpx
 from core.logging import log_request
+
+
 
 async def proxy_request(request: Request, target_url: str) -> Response:
     log_id = str(uuid.uuid4())
@@ -47,7 +50,7 @@ async def proxy_request(request: Request, target_url: str) -> Response:
                 "error": None,
                 "timestamp_response": datetime.now()
             })
-            log_request(log_data)
+            asyncio.create_task(log_request(log_data))
             if "application/json" in content_type:
                 return JSONResponse(
                     status_code=resp.status_code,
@@ -68,7 +71,7 @@ async def proxy_request(request: Request, target_url: str) -> Response:
                 "error": str(exc),
                 "timestamp_response": datetime.now()
             })
-            log_request(log_data)
+            asyncio.create_task(log_request(log_data))
             return JSONResponse(
                 status_code=502,
                 content={"detail": f"Error forwarding request to {target_url}: {str(exc)}"}
