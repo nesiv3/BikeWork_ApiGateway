@@ -1,8 +1,13 @@
 import asyncio
+import uuid
 from fastapi import FastAPI, APIRouter
 from core.config import settings
 from api.routes import create_proxy_route
 from utils.openapi_loader import fetch_openapi_spec
+from fastapi.responses import JSONResponse
+from fastapi.requests import Request
+from fastapi.exception_handlers import RequestValidationError
+from fastapi import status
 
 app = FastAPI(title="Dynamic API Gateway", version="1.0.4")
 routes_loaded = []
@@ -64,3 +69,27 @@ app.include_router(api_router)
 async def reload_apis():
     await load_routes_from_openapi()
     return {"message": "APIs reloaded successfully", "routes_loaded": len(routes_loaded)}
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    from services.proxy import get_http_client
+    client = get_http_client()
+    await client.aclose()
+
+@app.exception_handler(Exception)
+async def generic_exception_handler(request: Request, exc: Exception):
+    return JSONResponse(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content={"detail": str(exc)}
+    )
+
+@app.middleware("http")
+async def add_request_id(request: Request, call_next):
+    request_id = str(uuid.uuid4())
+    response = await call_next(request)
+    response.headers["X-Request-ID"] = request_id
+    return response
+
+@app.on_event("startup")
+async def startup_event():
+    await load_routes_from_openapi()

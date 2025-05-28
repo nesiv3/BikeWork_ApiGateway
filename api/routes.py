@@ -2,6 +2,19 @@ from fastapi import APIRouter, Request, Path
 from fastapi.routing import APIRoute
 import inspect
 from services.proxy import proxy_request
+from services.strategies import DefaultProxyStrategy, LoggingProxyStrategy
+
+def select_strategy(path: str, method: str):
+    # Ejemplo: usa LoggingProxyStrategy para endpoints críticos
+    if "/schedule" in path:
+        return LoggingProxyStrategy()
+    if "/store" in path:
+        return LoggingProxyStrategy()
+    if "/user" in path:
+        return LoggingProxyStrategy()
+    if "/param" in path:
+        return LoggingProxyStrategy()
+    return DefaultProxyStrategy()
 
 def make_endpoint(path: str, base_url: str, path_params: list, prefix: str = ""):
     async def endpoint(request: Request, **kwargs):
@@ -13,7 +26,8 @@ def make_endpoint(path: str, base_url: str, path_params: list, prefix: str = "")
         else:
             backend_path = final_path
         full_url = f"{base_url}{backend_path}"
-        return await proxy_request(request, full_url)
+        strategy = select_strategy(path, request.method)
+        return await strategy.proxy(request, full_url)
     return endpoint
 
 def create_proxy_route(path: str, method: str, base_url: str, summary: str = "", prefix: str = "") -> APIRoute:
