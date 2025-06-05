@@ -1,0 +1,4 @@
+{
+    "appService.defaultWebAppToDeploy": "/subscriptions/13edb14f-d385-455e-a98d-f03f60eeb96e/resourceGroups/bikework/providers/Microsoft.Web/sites/bikeworkapigateway",
+    "appService.deploySubpath": "."
+}
